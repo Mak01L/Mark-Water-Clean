@@ -52,40 +52,28 @@ def remove_watermark(input_path: str, output_path: str, mask_path: str = None) -
         print(f"❌ Error: Could not read image. Invalid format: {input_path}")
         return False
     
-    auto_mask_created = False
     if mask_path:
         if not os.path.exists(mask_path):
             print(f"❌ Error: Mask file not found: {mask_path}")
             return False
-        
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
         if mask is None:
             print(f"❌ Error: Could not read mask file: {mask_path}")
             return False
-        
         print(f"✅ Using custom mask: {mask_path}")
     else:
-        print("🔍 Generating automatic mask...")
+        print("🔍 Generating automatic mask in memory...")
         mask = generate_mask(image)
-        auto_mask_created = True
-        temp_mask_path = "temp_mask.png"
-        cv2.imwrite(temp_mask_path, mask)
-        mask_path = temp_mask_path
-    
+
     print("🪄 Applying inpainting...")
     result = cv2.inpaint(image, mask, 3, cv2.INPAINT_TELEA)
     
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
+        
     cv2.imwrite(output_path, result)
     print(f"✨ Success! Output saved to: {output_path}")
-    
-    if auto_mask_created and os.path.exists(temp_mask_path):
-        os.remove(temp_mask_path)
-        print("🧹 Cleaned up temporary mask file.")
-    
     return True
 
 
