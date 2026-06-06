@@ -20,6 +20,16 @@ CLI tool for removing watermarks and unwanted objects from images using OpenCV i
 
 > 💡 **Nota:** Para ver el resultado, agrega tus propias imágenes de prueba en la carpeta `examples/` y actualiza las rutas.
 
+## 🖥️ Versión Portable (Sin instalación)
+
+Si no quieres instalar Python, puedes compilar la herramienta en un ejecutable `.exe` (Windows) o binario (Mac/Linux):
+
+1. Instala PyInstaller: `pip install pyinstaller`
+2. Genera el ejecutable: `pyinstaller --noconsole --onefile gui.py`
+3. El archivo portable estará en la carpeta `dist/`.
+
+*(Próximamente: Descarga directa del ejecutable en la sección [Releases](#))*
+
 ## Installation
 
 ```bash
@@ -52,7 +62,13 @@ python main.py -i ./images/input -o ./images/output
 python main.py -i ./images/input -o ./images/output -m mask.png
 ```
 
-### Arguments
+### GUI Mode (Graphical Interface)
+
+```bash
+python gui.py
+```
+
+### Arguments (CLI)
 
 | Argument | Description | Required |
 |----------|-------------|----------|
@@ -78,7 +94,7 @@ You can create masks using image editors like Photoshop, GIMP, or Paint.NET.
 
 - [ ] 🎬 Video support (process entire video files)
 - [ ] 🧠 Advanced AI inpainting (LaMa, MAT)
-- [ ] 🎨 GUI interface for non-technical users
+- [x] 🖥️ GUI & Portable executable support
 - [x] 📦 Batch processing for multiple images
 - [ ] 🔧 Interactive mask editor
 
