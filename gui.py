@@ -66,7 +66,7 @@ class MarkWaterCleanGUI:
         label = tk.Label(frame, text=label_text, width=15, anchor="w", font=("Helvetica", 10, "bold"))
         label.pack(side="left")
         
-        entry = tk.Frame(frame, textvariable=string_var, font=("Helvetica", 10))
+        entry = tk.Entry(frame, textvariable=string_var, font=("Helvetica", 10))
         entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
         
         btn = tk.Button(frame, text="Buscar", command=browse_command, width=10)
