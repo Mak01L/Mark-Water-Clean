@@ -11,6 +11,9 @@ import cv2
 import numpy as np
 
 
+SUPPORTED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp'}
+
+
 def generate_mask(image: np.ndarray) -> np.ndarray:
     """
     Generate a basic mask by detecting white/gray pixels (threshold > 200).
@@ -77,6 +80,62 @@ def remove_watermark(input_path: str, output_path: str, mask_path: str = None) -
     return True
 
 
+def process_batch(input_dir: str, output_dir: str, mask_path: str = None) -> tuple:
+    """
+    Process all images in a directory.
+    
+    Args:
+        input_dir: Path to input directory.
+        output_dir: Path to output directory.
+        mask_path: Optional path to a custom mask image.
+    
+    Returns:
+        Tuple of (successful_count, failed_count).
+    """
+    if not os.path.isdir(input_dir):
+        print(f"❌ Error: Input path is not a directory: {input_dir}")
+        return 0, 0
+    
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"📁 Created output directory: {output_dir}")
+    
+    image_files = [
+        f for f in os.listdir(input_dir)
+        if os.path.splitext(f.lower())[1] in SUPPORTED_EXTENSIONS
+    ]
+    
+    if not image_files:
+        print(f"⚠️ No supported images found in {input_dir}")
+        print(f"   Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}")
+        return 0, 0
+    
+    total = len(image_files)
+    successful = 0
+    failed = 0
+    
+    print(f"📦 Found {total} image(s) to process...\n")
+    
+    for idx, filename in enumerate(image_files, 1):
+        input_file = os.path.join(input_dir, filename)
+        output_file = os.path.join(output_dir, filename)
+        
+        print(f"🔄 Processing {idx}/{total}: {filename}...")
+        
+        success = remove_watermark(input_file, output_file, mask_path)
+        
+        if success:
+            successful += 1
+        else:
+            failed += 1
+            print(f"⚠️ Warning: Skipping {filename} due to error.\n")
+        
+        if idx < total:
+            print()
+    
+    return successful, failed
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="🪄 Mark Water Clean - Remove watermarks and unwanted objects from images."
@@ -84,12 +143,12 @@ def main():
     parser.add_argument(
         "-i", "--input",
         required=True,
-        help="Path to the input image"
+        help="Path to input image or directory (supports .jpg, .jpeg, .png, .bmp)"
     )
     parser.add_argument(
         "-o", "--output",
         required=True,
-        help="Path to save the output image"
+        help="Path to save output image or directory"
     )
     parser.add_argument(
         "-m", "--mask",
@@ -99,15 +158,28 @@ def main():
     
     args = parser.parse_args()
     
-    print("🚀 Starting Mark Water Clean...")
-    success = remove_watermark(args.input, args.output, args.mask)
+    print("🚀 Starting Mark Water Clean...\n")
     
-    if success:
-        print("✅ Process completed successfully!")
-        sys.exit(0)
+    if os.path.isdir(args.input):
+        successful, failed = process_batch(args.input, args.output, args.mask)
+        total = successful + failed
+        
+        print("\n" + "=" * 50)
+        print(f"📊 Batch Processing Complete!")
+        print(f"   Total: {total} | ✅ Success: {successful} | ❌ Failed: {failed}")
+        print("=" * 50)
+        
+        if failed > 0:
+            sys.exit(1)
     else:
-        print("❌ Process failed.")
-        sys.exit(1)
+        success = remove_watermark(args.input, args.output, args.mask)
+        
+        if success:
+            print("\n✅ Process completed successfully!")
+            sys.exit(0)
+        else:
+            print("\n❌ Process failed.")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,15 @@ CLI tool for removing watermarks and unwanted objects from images using OpenCV i
 - ⚡ **Fast processing** - Uses efficient TELEA inpainting algorithm
 - 🪶 **Lightweight** - Minimal dependencies, no heavy ML models required
 - 🎯 **Custom mask support** - Use your own precise masks for better results
+- 📦 **Batch processing** - Process entire directories of images at once
+
+## 📸 Demo: Antes y Después
+
+| Original (Con marca de agua) | Resultado (Procesado) |
+| :---: | :---: |
+| ![Antes](examples/before.jpg) | ![Después](examples/after.jpg) |
+
+> 💡 **Nota:** Para ver el resultado, agrega tus propias imágenes de prueba en la carpeta `examples/` y actualiza las rutas.
 
 ## Installation
 
@@ -21,25 +30,41 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Basic usage (automatic mask detection)
+### Single image (automatic mask detection)
 
 ```bash
 python main.py -i input.jpg -o output.jpg
 ```
 
-### With custom mask
+### Single image with custom mask
 
 ```bash
 python main.py -i input.jpg -o output.jpg -m mask.png
+```
+
+### Batch processing (entire directory)
+
+```bash
+python main.py -i ./images/input -o ./images/output
+```
+
+```bash
+python main.py -i ./images/input -o ./images/output -m mask.png
 ```
 
 ### Arguments
 
 | Argument | Description | Required |
 |----------|-------------|----------|
-| `-i`, `--input` | Path to input image | Yes |
-| `-o`, `--output` | Path to save output image | Yes |
+| `-i`, `--input` | Path to input image or directory | Yes |
+| `-o`, `--output` | Path to save output image or directory | Yes |
 | `-m`, `--mask` | Path to custom mask (white = remove) | No |
+
+### Supported formats
+
+- `.jpg`, `.jpeg`
+- `.png`
+- `.bmp`
 
 ### Creating a custom mask
 
@@ -54,7 +79,7 @@ You can create masks using image editors like Photoshop, GIMP, or Paint.NET.
 - [ ] 🎬 Video support (process entire video files)
 - [ ] 🧠 Advanced AI inpainting (LaMa, MAT)
 - [ ] 🎨 GUI interface for non-technical users
-- [ ] 📦 Batch processing for multiple images
+- [x] 📦 Batch processing for multiple images
 - [ ] 🔧 Interactive mask editor
 
 ## License
