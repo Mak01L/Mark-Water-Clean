@@ -1,143 +1,163 @@
 #!/usr/bin/env python3
 """
 Mark Water Clean - GUI Interface
-Portable graphical interface using tkinter.
+Portable graphical interface using tkinter with single and batch mode support.
 """
 
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from main import remove_watermark
+from main import remove_watermark, process_batch
 
 
 class MarkWaterCleanGUI:
-    """Graphical user interface for Mark Water Clean."""
-    
     def __init__(self, root):
         self.root = root
         self.root.title("Mark Water Clean - Portable")
+        self.root.geometry("550x420")
         self.root.resizable(False, False)
         
+        self.is_batch_mode = tk.BooleanVar(value=False)
         self.input_path = tk.StringVar()
         self.mask_path = tk.StringVar()
         self.output_path = tk.StringVar()
         
         self.create_widgets()
-    
+
     def create_widgets(self):
-        """Create and layout all GUI widgets."""
         main_frame = tk.Frame(self.root, padx=20, pady=20)
-        main_frame.grid(row=0, column=0, sticky="nsew")
+        main_frame.pack(fill="both", expand=True)
         
-        title_label = tk.Label(
-            main_frame,
-            text="🪄 Mark Water Clean",
-            font=("Helvetica", 16, "bold")
+        title_label = tk.Label(main_frame, text="🪄 Mark Water Clean", font=("Helvetica", 16, "bold"))
+        title_label.pack(pady=(0, 10))
+        
+        batch_check = tk.Checkbutton(
+            main_frame, 
+            text="📦 Modo Lote (Procesar carpeta completa)", 
+            variable=self.is_batch_mode,
+            command=self.toggle_mode,
+            font=("Helvetica", 10)
         )
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        batch_check.pack(anchor="w", pady=(0, 15))
         
-        self.create_input_row(main_frame, "Imagen de entrada:", self.input_path, 1)
-        self.create_input_row(main_frame, "Máscara (opcional):", self.mask_path, 2)
-        self.create_input_row(main_frame, "Ruta de salida:", self.output_path, 3)
+        self.create_input_row(main_frame, "Entrada:", self.input_path, self.browse_input)
+        self.create_input_row(main_frame, "Máscara (Opc.):", self.mask_path, self.browse_mask)
+        self.create_input_row(main_frame, "Salida:", self.output_path, self.browse_output)
         
         process_btn = tk.Button(
             main_frame,
             text="✨ Procesar",
-            command=self.process_image,
+            command=self.process,
             bg="#4CAF50",
             fg="white",
             font=("Helvetica", 12, "bold"),
-            padx=20,
-            pady=10
+            width=20,
+            height=2
         )
-        process_btn.grid(row=4, column=0, columnspan=3, pady=30)
+        process_btn.pack(pady=25)
         
-        self.status_label = tk.Label(
-            main_frame,
-            text="",
-            font=("Helvetica", 10),
-            fg="#666666"
-        )
-        self.status_label.grid(row=5, column=0, columnspan=3)
-    
-    def create_input_row(self, parent, label_text, string_var, row):
-        """Create a row with label, entry field and browse button."""
-        label = tk.Label(parent, text=label_text, anchor="w")
-        label.grid(row=row, column=0, sticky="w", pady=5)
+        self.status_label = tk.Label(main_frame, text="Listo para usar", font=("Helvetica", 10), fg="#666666")
+        self.status_label.pack(side="bottom", pady=10)
+
+    def create_input_row(self, parent, label_text, string_var, browse_command):
+        frame = tk.Frame(parent)
+        frame.pack(fill="x", pady=8)
         
-        entry = tk.Entry(parent, textvariable=string_var, width=50)
-        entry.grid(row=row + 1, column=0, sticky="ew", padx=(0, 10))
+        label = tk.Label(frame, text=label_text, width=15, anchor="w", font=("Helvetica", 10, "bold"))
+        label.pack(side="left")
         
-        browse_btn = tk.Button(
-            parent,
-            text="Buscar",
-            command=lambda: self.browse_file(string_var)
-        )
-        browse_btn.grid(row=row + 1, column=1, sticky="e")
+        entry = tk.Frame(frame, textvariable=string_var, font=("Helvetica", 10))
+        entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
         
-        parent.grid_columnconfigure(0, weight=1)
-    
-    def browse_file(self, string_var):
-        """Open file dialog and update the corresponding StringVar."""
-        current_value = string_var.get()
-        
-        if string_var == self.output_path:
-            filename = filedialog.asksaveasfilename(
-                title="Guardar resultado como",
-                filetypes=[
-                    ("PNG files", "*.png"),
-                    ("JPEG files", "*.jpg *.jpeg"),
-                    ("BMP files", "*.bmp"),
-                    ("All files", "*.*")
-                ],
-                initialfile=current_value if current_value else None
-            )
+        btn = tk.Button(frame, text="Buscar", command=browse_command, width=10)
+        btn.pack(side="right")
+
+    def toggle_mode(self):
+        self.input_path.set("")
+        self.mask_path.set("")
+        self.output_path.set("")
+        self.status_label.config(text="Modo cambiado. Selecciona las rutas nuevamente.", fg="#2196F3")
+
+    def browse_input(self):
+        if self.is_batch_mode.get():
+            path = filedialog.askdirectory(title="Seleccionar carpeta de entrada")
         else:
-            filename = filedialog.askopenfilename(
-                title="Seleccionar archivo",
-                filetypes=[
-                    ("Image files", "*.png *.jpg *.jpeg *.bmp"),
-                    ("All files", "*.*")
-                ]
+            path = filedialog.askopenfilename(
+                title="Seleccionar imagen de entrada",
+                filetypes=[("Imágenes", "*.png *.jpg *.jpeg *.bmp")]
             )
+            if path:
+                base, ext = os.path.splitext(path)
+                self.output_path.set(f"{base}_cleaned{ext}")
+                
+        if path:
+            self.input_path.set(path)
+
+    def browse_mask(self):
+        path = filedialog.askopenfilename(
+            title="Seleccionar máscara (opcional)",
+            filetypes=[("Imágenes", "*.png *.jpg *.jpeg *.bmp")]
+        )
+        if path:
+            self.mask_path.set(path)
+
+    def browse_output(self):
+        if self.is_batch_mode.get():
+            path = filedialog.askdirectory(title="Seleccionar carpeta de salida")
+        else:
+            path = filedialog.asksaveasfilename(
+                title="Guardar resultado como",
+                filetypes=[("PNG", "*.png"), ("JPEG", "*.jpg *.jpeg"), ("BMP", "*.bmp")],
+                initialfile=self.output_path.get() or "output_cleaned.png"
+            )
+        if path:
+            self.output_path.set(path)
+
+    def process(self):
+        inp = self.input_path.get()
+        out = self.output_path.get()
+        mask = self.mask_path.get() or None
         
-        if filename:
-            string_var.set(filename)
-    
-    def process_image(self):
-        """Execute the watermark removal process."""
-        if not self.input_path.get():
-            messagebox.showerror("Error", "❌ Por favor selecciona una imagen de entrada.")
+        if not inp or not out:
+            messagebox.showerror("Error", "❌ Por favor selecciona las rutas de entrada y salida.")
             return
-        
-        if not self.output_path.get():
-            messagebox.showerror("Error", "❌ Por favor selecciona una ruta de salida.")
+            
+        if not os.path.exists(inp):
+            messagebox.showerror("Error", f"❌ La ruta de entrada no existe:\n{inp}")
             return
-        
-        if not os.path.exists(self.input_path.get()):
-            messagebox.showerror("Error", f"❌ La imagen de entrada no existe:\n{self.input_path.get()}")
-            return
-        
-        mask = self.mask_path.get() if self.mask_path.get() else None
-        if mask and not os.path.exists(mask):
-            messagebox.showerror("Error", f"❌ El archivo de máscara no existe:\n{mask}")
-            return
-        
+
         self.status_label.config(text="⏳ Procesando...", fg="#FF9800")
         self.root.update()
         
-        success = remove_watermark(self.input_path.get(), self.output_path.get(), mask)
-        
-        if success:
-            self.status_label.config(text="✅ Éxito - Imagen procesada correctamente", fg="#4CAF50")
-            messagebox.showinfo("Éxito", "✨ ¡Imagen procesada correctamente!\n\nLa salida se guardó en:\n" + self.output_path.get())
-        else:
-            self.status_label.config(text="❌ Error - Procesamiento fallido", fg="#F44336")
-            messagebox.showerror("Error", "❌ El procesamiento falló. Revisa la consola para más detalles.")
+        try:
+            if self.is_batch_mode.get():
+                if not os.path.isdir(inp) or not os.path.isdir(out):
+                    messagebox.showerror("Error", "❌ En modo lote, entrada y salida deben ser carpetas.")
+                    self.status_label.config(text="❌ Error de configuración", fg="#F44336")
+                    return
+                
+                successful, failed = process_batch(inp, out, mask)
+                total = successful + failed
+                if failed == 0:
+                    self.status_label.config(text=f"✅ Éxito: {successful} imágenes procesadas", fg="#4CAF50")
+                    messagebox.showinfo("Éxito", f"✨ ¡Procesamiento por lotes completado!\n✅ Exitosas: {successful}\n❌ Fallidas: {failed}")
+                else:
+                    self.status_label.config(text=f"⚠️ Completado con {failed} errores", fg="#FF9800")
+                    messagebox.showwarning("Advertencia", f"Procesamiento completado.\n✅ Exitosas: {successful}\n❌ Fallidas: {failed}")
+            else:
+                success = remove_watermark(inp, out, mask)
+                if success:
+                    self.status_label.config(text="✅ Éxito - Imagen procesada", fg="#4CAF50")
+                    messagebox.showinfo("Éxito", f"✨ ¡Imagen procesada correctamente!\nGuardada en:\n{out}")
+                else:
+                    self.status_label.config(text="❌ Error en el proceso", fg="#F44336")
+                    messagebox.showerror("Error", "❌ El procesamiento falló.")
+        except Exception as e:
+            self.status_label.config(text="❌ Error inesperado", fg="#F44336")
+            messagebox.showerror("Error", f"Ocurrió un error:\n{str(e)}")
 
 
 def main():
-    """Launch the GUI application."""
     root = tk.Tk()
     app = MarkWaterCleanGUI(root)
     root.mainloop()
