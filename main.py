@@ -14,11 +14,15 @@ SUPPORTED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp'}
 
 
 def generate_mask(image: np.ndarray) -> np.ndarray:
-    """Generate automatic mask by detecting white/gray pixels."""
+    """
+    Generate a basic mask by detecting EXTREME white pixels (threshold > 240).
+    Applies dilation to cover edges of the watermark area.
+    Note: This is a basic fallback. Custom masks are always recommended for best results.
+    """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
-    kernel = np.ones((5, 5), np.uint8)
-    return cv2.dilate(mask, kernel, iterations=2)
+    _, mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+    kernel = np.ones((3, 3), np.uint8)
+    return cv2.dilate(mask, kernel, iterations=1)
 
 
 def remove_watermark(input_path: str, output_path: str, mask_path: str = None) -> bool:
@@ -54,7 +58,9 @@ def remove_watermark(input_path: str, output_path: str, mask_path: str = None) -
         _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
         print(f"✅ Using custom mask (optimized): {mask_path}")
     else:
-        print("🔍 Generating automatic mask in memory...")
+        print("⚠️  WARNING: Using automatic mask detection.")
+        print("💡 Note: Auto-detection only works for pure white watermarks on dark backgrounds.")
+        print("💡 For colored watermarks or to protect white text, ALWAYS use a custom mask (-m).")
         mask = generate_mask(image)
 
     print("🪄 Applying inpainting...")
@@ -106,7 +112,9 @@ def process_batch(input_dir: str, output_dir: str, mask_path: str = None) -> tup
 
 
 def main():
-    parser = argparse.ArgumentParser(description="🪄 Mark Water Clean")
+    parser = argparse.ArgumentParser(
+        description="🪄 Mark Water Clean - Remove watermarks from images"
+    )
     parser.add_argument(
         "-i", "--input",
         required=True,
@@ -120,7 +128,7 @@ def main():
     parser.add_argument(
         "-m", "--mask",
         required=False,
-        help="Optional custom mask path"
+        help="Optional custom mask path (RECOMMENDED for colored watermarks)"
     )
     args = parser.parse_args()
 
